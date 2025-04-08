@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"os"
 
 	"github.com/gorilla/mux"
 	 _ "github.com/lib/pq"
@@ -28,7 +29,11 @@ var db *sql.DB
 
 func main() {
 	var err error
-	connStr := "postgres://postgres:postgres@localhost:5432/subscriptions?sslmode=disable"
+	connStr := os.Getenv("DATABASE_URL")
+    if connStr == "" {
+        connStr = "postgres://postgres:postgres@localhost:5432/subscriptions?sslmode=disable"
+    }
+    
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
@@ -59,6 +64,7 @@ func main() {
 	r.HandleFunc("/api/subscriptions/{id}", deleteSubscription).Methods("DELETE")
 
 	r.HandleFunc("/api/stats", getStats).Methods("GET")
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 	
 	port := "8080"
 	fmt.Printf("Starting server on port %s...\n", port)
